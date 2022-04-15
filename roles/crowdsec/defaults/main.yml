@@ -51,9 +51,7 @@ crowdsec_docker_commands: "{{ crowdsec_docker_commands_default
                             + crowdsec_docker_commands_custom }}"
 
 # Volumes
-crowdsec_docker_volumes_default:
-  - "{{ crowdsec_paths_config_location }}:/etc/crowdsec"
-  - "{{ crowdsec_paths_data_location }}:/var/lib/crowdsec/data"
+crowdsec_docker_volumes_default: []
 crowdsec_docker_volumes_custom: []
 crowdsec_docker_volumes: "{{ crowdsec_docker_volumes_default
                            + crowdsec_docker_volumes_custom }}"
