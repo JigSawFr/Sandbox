@@ -40,7 +40,7 @@ crowdsec_docker_envs_default:
   PUID: "{{ uid }}"
   PGID: "{{ gid }}"
   TZ: "{{ tz }}"
-  COLLECTIONS: "crowdsecurity/sshd LePresidente/authelia"
+  COLLECTIONS: "crowdsecurity/sshd LePresidente/authelia crowdsecurity/traefik"
 crowdsec_docker_envs_custom: {}
 crowdsec_docker_envs: "{{ crowdsec_docker_envs_default
                         | combine(crowdsec_docker_envs_custom) }}"
@@ -60,6 +60,7 @@ crowdsec_docker_volumes_logs:
   - "/var/log/auth.log:/logs/auth.log:ro"
   - "/var/log/syslog:/logs/syslog.log:ro"
   - "/opt/authelia/authelia.log:/logs/authelia.log:ro"
+  - "/opt/traefik:/logs/traefik:ro"
 crowdsec_docker_volumes_custom: []
 crowdsec_docker_volumes: "{{ crowdsec_docker_volumes_default
                            + crowdsec_docker_volumes_logs
