@@ -59,7 +59,7 @@ crowdsec_docker_volumes_default:
 crowdsec_docker_volumes_logs:
   - "/var/log/auth.log:/logs/auth.log:ro"
   - "/var/log/syslog:/logs/syslog.log:ro"
-  - "/opt/authelia/authelia.log:/log/authelia.log:ro"
+  - "/opt/authelia/authelia.log:/logs/authelia.log:ro"
 crowdsec_docker_volumes_custom: []
 crowdsec_docker_volumes: "{{ crowdsec_docker_volumes_default
                            + crowdsec_docker_volumes_logs
