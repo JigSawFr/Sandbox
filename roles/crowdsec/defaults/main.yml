@@ -37,7 +37,7 @@ crowdsec_docker_image: "crowdsecurity/crowdsec:{{ crowdsec_docker_image_tag }}"
 
 # Ports
 crowdsec_docker_ports_defaults:
-  - "127.0.0.1:1337:8080"
+  - "127.0.0.1:8080"
 crowdsec_docker_ports_custom: []
 crowdsec_docker_ports: "{{ crowdsec_docker_ports_defaults
                           + crowdsec_docker_ports_custom
