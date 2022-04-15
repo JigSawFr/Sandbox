@@ -58,7 +58,7 @@ crowdsec_docker_volumes_default:
   - "{{ server_appdata_path }}:/opt"
 crowdsec_docker_volumes_logs:
   - "/var/log/auth.log:/logs/auth.log:ro"
-  - "/var/log/syslog.log:/logs/syslog.log:ro"
+  - "/var/log/syslog.log:/logs/syslog:ro"
 crowdsec_docker_volumes_custom: []
 crowdsec_docker_volumes: "{{ crowdsec_docker_volumes_default
                            + crowdsec_docker_volumes_logs
