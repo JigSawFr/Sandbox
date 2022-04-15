@@ -20,8 +20,8 @@ crowdsec_paths_folder: "{{ crowdsec_name }}"
 crowdsec_paths_location: "{{ server_appdata_path }}/{{ crowdsec_paths_folder }}"
 crowdsec_paths_folders_list:
   - "{{ crowdsec_paths_location }}"
-  - "{{ crowdsec_paths_data_location }}/data"
-  - "{{ crowdsec_paths_config_location }}/config"
+  - "{{ crowdsec_paths_location }}/data"
+  - "{{ crowdsec_paths_location }}/config"
 
 ################################
 # Docker
