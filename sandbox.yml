@@ -95,6 +95,7 @@
     - { role: omegabrr, tags: ['omegabrr'] }
     - { role: ouroboros, tags: ['ouroboros'] }
     - { role: paperless_ngx, tags: ['paperless-ngx'] }
+    - { role: papermerge, tags: ['papermerge'] }
     - { role: pgadmin, tags: ['pgadmin'] }
     - { role: photoprism, tags: ['photoprism'] }
     - { role: plex_autoscan, tags: ['plex_autoscan'] }

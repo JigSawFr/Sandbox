@@ -1,0 +1,176 @@
+##########################################################################
+# Title:            Sandbox: Papermerge | Default Variables              #
+# Author(s):        JigSawFr                                             #
+# URL:              https://github.com/saltyorg/Sandbox                  #
+# --                                                                     #
+##########################################################################
+#                   GNU General Public License v3.0                      #
+##########################################################################
+---
+################################
+# Basics
+################################
+
+papermerge_name: papermerge
+
+################################
+# Paths
+################################
+
+papermerge_paths_folder: "{{ papermerge_name }}"
+papermerge_paths_location: "{{ server_appdata_path }}/{{ papermerge_paths_folder }}/backend"
+papermerge_paths_folders_list:
+  - "{{ papermerge_paths_location }}"
+  - "{{ papermerge_paths_location }}/media"
+  - "{{ papermerge_paths_location }}/xapian_index"
+
+################################
+# Web
+################################
+
+papermerge_web_subdomain: "{{ papermerge_name }}"
+papermerge_web_domain: "{{ user.domain }}"
+papermerge_web_port: "8000"
+papermerge_web_url: "{{ 'https://' + papermerge_web_subdomain + '.' + papermerge_web_domain
+                     if (reverse_proxy_is_enabled)
+                     else 'http://localhost:' + papermerge_web_port }}"
+
+################################
+# DNS
+################################
+
+papermerge_dns_record: "{{ papermerge_web_subdomain }}"
+papermerge_dns_zone: "{{ papermerge_web_domain }}"
+papermerge_dns_proxy: "{{ dns.proxied }}"
+
+################################
+# Traefik
+################################
+
+papermerge_traefik_sso_middleware: "{{ traefik_default_sso_middleware }}"
+papermerge_traefik_middleware_default: "{{ traefik_default_middleware + ','
+                                           + lookup('vars', papermerge_name + '_traefik_sso_middleware', default=papermerge_traefik_sso_middleware)
+                                        if (lookup('vars', papermerge_name + '_traefik_sso_middleware', default=papermerge_traefik_sso_middleware) | length > 0)
+                                        else traefik_default_middleware }}"
+papermerge_traefik_middleware_custom: ""
+papermerge_traefik_middleware: "{{ papermerge_traefik_middleware_default + ','
+                                   + papermerge_traefik_middleware_custom
+                                if (not papermerge_traefik_middleware_custom.startswith(',') and papermerge_traefik_middleware_custom | length > 0)
+                                else papermerge_traefik_middleware_default
+                                   + papermerge_traefik_middleware_custom }}"
+papermerge_traefik_certresolver: "{{ traefik_default_certresolver }}"
+papermerge_traefik_enabled: true
+papermerge_traefik_api_enabled: true
+papermerge_traefik_api_endpoint: "`/api`"
+
+################################
+# Docker
+################################
+
+# Container
+papermerge_docker_container: "{{ papermerge_name }}"
+
+# Image
+papermerge_docker_image_pull: true
+papermerge_docker_image_tag: "latest"
+papermerge_docker_image: "ghcr.io/papermerge/papermerge:{{ papermerge_docker_image_tag }}"
+
+# Healthcheck
+papermerge_docker_healthcheck:
+  test: ["CMD", "curl", "--fail", "http://localhost:{{ papermerge_web_port }}"]
+  interval: 10s
+  timeout: 5s
+  retries: 10
+  start_period: 10s
+
+# Ports
+papermerge_docker_ports_defaults:
+  - "{{ papermerge_web_port }}"
+papermerge_docker_ports_custom: []
+papermerge_docker_ports: "{{ papermerge_docker_ports_defaults
+                             + papermerge_docker_ports_custom
+                          if (not reverse_proxy_is_enabled)
+                          else papermerge_docker_ports_custom }}"
+
+# Envs
+papermerge_docker_envs_default:
+  PAPERMERGE__MAIN__SECRET_KEY: "{{ papermerge_secret_key.stdout }}"
+  PAPERMERGE__MAIN__TIMEZONE: "{{ tz }}"
+  PAPERMERGE__DATABASE__TYPE: "postgres"
+  PAPERMERGE__DATABASE__USER: "{{ postgres_docker_env_user }}"
+  PAPERMERGE__DATABASE__NAME: "{{ papermerge_name }}"
+  PAPERMERGE__DATABASE__PASSWORD: "{{ postgres_docker_env_password }}"
+  PAPERMERGE__DATABASE__HOST: "{{ papermerge_name }}_postgres"
+  PAPERMERGE__REDIS__HOST: "{{ papermerge_name }}_redis"
+  PAPERMERGE__REDIS__PORT: "6379"
+  PAPERMERGE__SEARCH__PATH: "/app/xapian_index"
+  DJANGO_SUPERUSER_USERNAME: "{{ user.name }}"
+  DJANGO_SUPERUSER_EMAIL: "{{ user.email }}"
+  DJANGO_SUPERUSER_PASSWORD: "{{ user.password }}"
+  DJANGO_SETTINGS_MODULE: "config.settings"
+papermerge_docker_envs_custom: {}
+papermerge_docker_envs: "{{ papermerge_docker_envs_default
+                            | combine(papermerge_docker_envs_custom) }}"
+
+# Commands
+papermerge_docker_commands_default: []
+papermerge_docker_commands_custom: []
+papermerge_docker_commands: "{{ papermerge_docker_commands_default
+                                + papermerge_docker_commands_custom }}"
+
+# Volumes
+papermerge_docker_volumes_default:
+  - "{{ papermerge_paths_location }}/media:/opt/media"
+  - "{{ papermerge_paths_location }}/xapian_index:/app/xapian_index"
+papermerge_docker_volumes_custom: []
+papermerge_docker_volumes: "{{ papermerge_docker_volumes_default
+                               + papermerge_docker_volumes_custom }}"
+
+# Devices
+papermerge_docker_devices_default: []
+papermerge_docker_devices_custom: []
+papermerge_docker_devices: "{{ papermerge_docker_devices_default
+                               + papermerge_docker_devices_custom }}"
+
+# Hosts
+papermerge_docker_hosts_default: []
+papermerge_docker_hosts_custom: []
+papermerge_docker_hosts: "{{ docker_hosts_common
+                             | combine(papermerge_docker_hosts_default)
+                             | combine(papermerge_docker_hosts_custom) }}"
+
+# Labels
+papermerge_docker_labels_default: {}
+papermerge_docker_labels_custom: {}
+papermerge_docker_labels: "{{ docker_labels_common
+                              | combine(papermerge_docker_labels_default)
+                              | combine(papermerge_docker_labels_custom) }}"
+
+# Hostname
+papermerge_docker_hostname: "{{ papermerge_name }}"
+
+# Networks
+papermerge_docker_networks_alias: "{{ papermerge_name }}"
+papermerge_docker_networks_default: []
+papermerge_docker_networks_custom: []
+papermerge_docker_networks: "{{ docker_networks_common
+                                + papermerge_docker_networks_default
+                                + papermerge_docker_networks_custom }}"
+
+# Capabilities
+papermerge_docker_capabilities_default: []
+papermerge_docker_capabilities_custom: []
+papermerge_docker_capabilities: "{{ papermerge_docker_capabilities_default
+                                    + papermerge_docker_capabilities_custom }}"
+
+# Security Opts
+papermerge_docker_security_opts_default: []
+papermerge_docker_security_opts_custom: []
+papermerge_docker_security_opts: "{{ papermerge_docker_security_opts_default
+                                     + papermerge_docker_security_opts_custom }}"
+
+# Restart Policy
+papermerge_docker_restart_policy: unless-stopped
+
+# State
+papermerge_docker_state: started
