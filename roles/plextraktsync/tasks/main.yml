@@ -1,35 +1,41 @@
-##########################################################################
-# Title:            Sandbox: PlexTraktSync Role                          #
-# Author(s):        keldian                                              #
-# URL:              https://github.com/saltyorg/Sandbox                  #
-# --                                                                     #
-##########################################################################
-#                   GNU General Public License v3.0                      #
-##########################################################################
+#######################################################################
+# Title:            Sandbox: PlexTraktSync | Tasks                    #
+# Author(s):        keldian                                           #
+# URL:              https://github.com/saltyorg/Sandbox               #
+# --                                                                  #
+#######################################################################
+#                   GNU General Public License v3.0                   #
+#######################################################################
 ---
 - name: Remove existing Docker container
-  include_tasks: "{{ resources_tasks_path }}/docker/remove_docker_container.yml"
+  ansible.builtin.include_tasks: "{{ resources_tasks_path }}/docker/remove_docker_container.yml"
 
 - name: Create directories
-  file:
-    path: "{{ item }}"
-    state: directory
-    owner: "{{ user.name }}"
-    group: "{{ user.name }}"
-    mode: "0775"
-  with_items: "{{ lookup('vars', role_name + '_paths_folders_list') }}"
+  ansible.builtin.include_tasks: "{{ resources_tasks_path }}/directories/create_directories.yml"
 
-- name: Check if `{{ plextraktsync_paths_config_location | basename }}` exists
-  stat:
-    path: "{{ plextraktsync_paths_config_location }}"
+- name: Check if `{{ plextraktsync_paths_env | basename }}` exists
+  ansible.builtin.stat:
+    path: "{{ plextraktsync_paths_env }}"
   register: plextraktsync_env
 
 - name: Pre-Install Tasks
-  include_tasks: "subtasks/pre-install/main.yml"
+  ansible.builtin.include_tasks: "subtasks/pre-install/main.yml"
   when: not plextraktsync_env.stat.exists
 
 - name: Create Docker container
-  include_tasks: "{{ resources_tasks_path }}/docker/create_docker_container.yml"
+  ansible.builtin.include_tasks: "{{ resources_tasks_path }}/docker/create_docker_container.yml"
 
-- name: Post-Install Tasks
-  import_tasks: "subtasks/post-install/main.yml"
+- name: Wait for directory to be populated
+  ansible.builtin.wait_for:
+    path: "{{ plextraktsync_paths_log }}"
+
+- name: Sleep 3 seconds
+  ansible.builtin.wait_for:
+    timeout: 3
+
+- name: Reset files ownership
+  ansible.builtin.file:
+    path: "{{ plextraktsync_paths_location }}"
+    owner: "{{ user.name }}"
+    group: "{{ user.name }}"
+    recurse: true

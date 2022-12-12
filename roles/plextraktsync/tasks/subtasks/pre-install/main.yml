@@ -1,56 +1,45 @@
-##########################################################################
-# Title:            Sandbox: PlexTraktSync Role                          #
-# Author(s):        keldian                                              #
-# URL:              https://github.com/saltyorg/Sandbox                  #
-# --                                                                     #
-##########################################################################
-#                   GNU General Public License v3.0                      #
-##########################################################################
+#######################################################################
+# Title:            Sandbox: PlexTraktSync | Tasks | Pre-Install      #
+# Author(s):        keldian                                           #
+# URL:              https://github.com/saltyorg/Sandbox               #
+# --                                                                  #
+#######################################################################
+#                   GNU General Public License v3.0                   #
+#######################################################################
 ---
-- name: Pre-Install | Import Default Plex variables
-  include_vars: /srv/git/saltbox/roles/plex/defaults/main.yml
-
-- name: Set Default Plex instance
-  set_fact:
+- name: Set default Plex instance
+  ansible.builtin.set_fact:
     plex_name: "{{ plex_instances[0] }}"
   when: not plex_name is defined
 
-- name: Pre-Install | Check if {{ plex_paths_config_location | basename }} exists
-  stat:
+- name: Check if {{ plex_paths_config_location | basename }} exists
+  ansible.builtin.stat:
     path: "{{ plex_paths_config_location }}"
   register: preferences_xml
 
-- name: Pre-Install | {{ plex_paths_config_location | basename }} Tasks
+- name: Get default Plex username
   block:
-    - name: Pre-Install | Get {{ plex_paths_config_location | basename }} XML data
-      xml:
+    - name: Get {{ plex_paths_config_location | basename }} XML data
+      community.general.xml:
         path: "{{ plex_paths_config_location }}"
         xpath: /Preferences
         content: attribute
       register: preferences_xml_resp
 
-    - name: Pre-Install | Set plex_host_username variable
-      set_fact:
-        plex_host_username: "{{ preferences_xml_resp.matches[0].Preferences.PlexOnlineUsername }}"
+    - name: Set plex_owner_username variable
+      ansible.builtin.set_fact:
+        plex_owner_username: "{{ preferences_xml_resp.matches[0].Preferences.PlexOnlineUsername }}"
 
   ignore_errors: true
   when: preferences_xml.stat.exists
 
-- name: Pre-Install | Plex Auth Token tasks
-  import_role:
+- name: Plex Auth Token tasks
+  ansible.builtin.include_role:
     name: plex_auth_token
   when: plex_account_is_enabled
 
-- name: Pre-Install | Create {{ plextraktsync_paths_config_location | basename }}
-  copy:
-    content: |
-      # This is .env file for PlexTraktSync
-      PLEX_BASEURL=
-      PLEX_LOCALURL={{ 'http://' + plex_docker_networks_alias + ':' + plex_web_port }}
-      PLEX_TOKEN={{ plex_auth_token | d('') }}
-      PLEX_USERNAME={{ plex_host_username | d('') | escape }}
-      TRAKT_USERNAME=
-    dest: "{{ plextraktsync_paths_config_location }}"
-    owner: "{{ user.name }}"
-    group: "{{ user.name }}"
-    mode: 0664
+- name: Create {{ plextraktsync_paths_env | basename }}
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ plextraktsync_paths_env }}"
+    mode: 0644

@@ -31,9 +31,7 @@ handbrake_paths_folders_list:
 handbrake_web_subdomain: "{{ handbrake_name }}"
 handbrake_web_domain: "{{ user.domain }}"
 handbrake_web_port: "5800"
-handbrake_web_url: "{{ 'https://' + handbrake_web_subdomain + '.' + handbrake_web_domain
-                    if (reverse_proxy_is_enabled)
-                    else 'http://localhost:' + handbrake_web_port }}"
+handbrake_web_url: "{{ 'https://' + handbrake_web_subdomain + '.' + handbrake_web_domain }}"
 
 ################################
 # DNS
@@ -64,13 +62,10 @@ handbrake_docker_image_tag: "latest"
 handbrake_docker_image: "jlesage/handbrake:{{ handbrake_docker_image_tag }}"
 
 # Ports
-handbrake_docker_ports_defaults:
-  - "{{ handbrake_web_port }}"
+handbrake_docker_ports_defaults: []
 handbrake_docker_ports_custom: []
 handbrake_docker_ports: "{{ handbrake_docker_ports_defaults
-                            + handbrake_docker_ports_custom
-                         if (not reverse_proxy_is_enabled)
-                         else [] + handbrake_docker_ports_custom }}"
+                            + handbrake_docker_ports_custom }}"
 
 # Envs
 handbrake_docker_envs_default:
@@ -79,7 +74,7 @@ handbrake_docker_envs_default:
   TZ: "{{ tz }}"
   CLEAN_TMP_DIR: "1"
   ENABLE_CJK_FONT: "1"
-  VNC_PASSWORD: "{{ handbrake.handbrake_pass|default('saltbox',true) }}"
+  VNC_PASSWORD: "{{ handbrake.handbrake_pass | default('saltbox', true) }}"
 handbrake_docker_envs_custom: {}
 handbrake_docker_envs: "{{ handbrake_docker_envs_default
                            | combine(handbrake_docker_envs_custom) }}"
@@ -107,7 +102,7 @@ handbrake_docker_devices_custom: []
 handbrake_docker_devices: "{{ handbrake_docker_devices_default
                               + handbrake_docker_devices_custom
                            if (gpu.intel and dev_dri.stat.exists)
-                           else [] + handbrake_docker_devices_custom }}"
+                           else handbrake_docker_devices_custom }}"
 
 # Hosts
 handbrake_docker_hosts_default: []

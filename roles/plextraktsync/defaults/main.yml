@@ -19,7 +19,8 @@ plextraktsync_name: plextraktsync
 
 plextraktsync_paths_folder: "{{ plextraktsync_name }}"
 plextraktsync_paths_location: "{{ server_appdata_path }}/{{ plextraktsync_paths_folder }}"
-plextraktsync_paths_config_location: "{{ plextraktsync_paths_location }}/.env"
+plextraktsync_paths_env: "{{ plextraktsync_paths_location }}/.env"
+plextraktsync_paths_log: "{{ plextraktsync_paths_location }}/plextraktsync.log"
 plextraktsync_paths_folders_list:
   - "{{ plextraktsync_paths_location }}"
 
@@ -43,8 +44,8 @@ plextraktsync_docker_envs: "{{ plextraktsync_docker_envs_default
                                | combine(plextraktsync_docker_envs_custom) }}"
 
 # Commands
-plextraktsync_docker_commands_default: 
-  - "watch"
+plextraktsync_docker_commands_default:
+  - watch
 plextraktsync_docker_commands_custom: []
 plextraktsync_docker_commands: "{{ plextraktsync_docker_commands_default
                                    + plextraktsync_docker_commands_custom }}"
@@ -104,9 +105,3 @@ plextraktsync_docker_restart_policy: unless-stopped
 
 # State
 plextraktsync_docker_state: started
-
-# Stop Timeout
-plextraktsync_docker_stop_timeout: 10
-
-# User
-plextraktsync_docker_user: "{{ uid }}:{{ gid }}"

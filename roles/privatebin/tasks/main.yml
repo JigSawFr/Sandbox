@@ -1,0 +1,43 @@
+#########################################################################
+# Title:         Sandbox: Private Bin                                   #
+# Author(s):     tipdec-siblyn, thatsnasty, salty                       #
+# URL:           https://github.com/saltyorg/Sandbox                    #
+# --                                                                    #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+- name: Add DNS record
+  ansible.builtin.include_tasks: "{{ resources_tasks_path }}/dns/tasker.yml"
+  vars:
+    dns_record: "{{ lookup('vars', role_name + '_dns_record') }}"
+    dns_zone: "{{ lookup('vars', role_name + '_dns_zone') }}"
+    dns_proxy: "{{ lookup('vars', role_name + '_dns_proxy') }}"
+
+- name: Remove existing Docker container
+  community.docker.docker_container:
+    name: "{{ lookup('vars', role_name + '_docker_container') }}"
+    state: absent
+    container_default_behavior: compatibility
+
+- name: Create directories
+  ansible.builtin.include_tasks: "{{ resources_tasks_path }}/directories/create_directories.yml"
+
+- name: Check 'conf.php'' exists
+  ansible.builtin.stat:
+    path: "{{ privatebin_paths_location }}/conf.php"
+  register: conf_php
+
+- name: Import default 'conf.php'
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/PrivateBin/PrivateBin/master/cfg/conf.sample.php
+    dest: "{{ privatebin_paths_location }}/conf.php"
+    owner: "{{ user.name }}"
+    group: "{{ user.name }}"
+    validate_certs: false
+    mode: 0775
+    force: true
+  when: not conf_php.stat.exists
+
+- name: Create Docker container
+  ansible.builtin.include_tasks: "{{ resources_tasks_path }}/docker/create_docker_container.yml"

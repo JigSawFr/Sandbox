@@ -7,16 +7,13 @@
 #                   GNU General Public License v3.0                     #
 #########################################################################
 ---
-- name: Import Default Plex variables
-  include_vars: /srv/git/saltbox/roles/plex/defaults/main.yml
-
 - name: Set Default Plex instance
-  set_fact:
+  ansible.builtin.set_fact:
     plex_name: "{{ plex_instances[0] }}"
   when: not plex_name is defined
 
 - name: Create python-plexlibrary directories
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     owner: "{{ user.name }}"
@@ -27,7 +24,7 @@
     - "/opt/python-plexlibrary"
 
 - name: Clone python-plexlibrary
-  git:
+  ansible.builtin.git:
     repo: "https://github.com/adamgot/python-plexlibrary.git"
     dest: "/opt/python-plexlibrary"
     version: master
@@ -35,21 +32,56 @@
   become: true
   become_user: "{{ user.name }}"
 
+- name: Set Python version
+  ansible.builtin.set_fact:
+    python_plexlibrary_python: "{{ 'python3'
+                             if ansible_distribution_version is version('20.04', '==')
+                             else 'python3.8' }}"
+
+- name: "Execute Python role"
+  ansible.builtin.include_role:
+    name: "python"
+  vars:
+    python_version: "3.8"
+  when: ansible_distribution_version is version('22.04', '==')
+
+- name: Check if venv folder exists
+  ansible.builtin.stat:
+    path: "/opt/python-plexlibrary/venv"
+  register: python_plexlibrary_venv_folder
+
+- name: Delete venv folder
+  ansible.builtin.file:
+    path: "/opt/python-plexlibrary/venv"
+    state: absent
+  when: python_plexlibrary_venv_folder.stat.exists
+
 - name: Install pip requirements
-  pip:
+  ansible.builtin.pip:
     requirements: "/opt/python-plexlibrary/requirements.txt"
-    virtualenv_python: python3
-    virtualenv: "/opt/plex_autoscan/venv"
+    virtualenv_python: "{{ python_plexlibrary_python }}"
+    virtualenv: "/opt/python-plexlibrary/venv"
   become: true
   become_user: "{{ user.name }}"
 
+- name: Find pip3 path
+  ansible.builtin.find:
+    paths: /opt/python-plexlibrary/venv
+    recurse: yes
+    patterns: 'pip3'
+  register: files
+
+- name: Path
+  ansible.builtin.set_fact:
+    python_plexlibrary_bin_folder: "{{ files.files[0].path | dirname }}"
+
 - name: Check config exists
-  stat:
+  ansible.builtin.stat:
     path: "/opt/python-plexlibrary/config.yml"
   register: python_plexlibrary_config
 
 - name: Create config from template
-  copy:
+  ansible.builtin.copy:
     src: "/opt/python-plexlibrary/config-template.yml"
     dest: "/opt/python-plexlibrary/config.yml"
     owner: "{{ user.name }}"
@@ -59,25 +91,25 @@
   when: not python_plexlibrary_config.stat.exists
 
 - name: Add plex url to config file
-  shell: |
+  ansible.builtin.shell: |
     yyq e -i '.plex.baseurl = "{{ plex_web_url }}"' /opt/python-plexlibrary/config.yml
   become: true
   become_user: "{{ user.name }}"
 
 - name: Import Plex Auth Token role
-  import_role:
+  ansible.builtin.include_role:
     name: plex_auth_token
   when: plex_account_is_enabled
 
 - name: Add plex token to config file
-  shell: |
+  ansible.builtin.shell: |
     yyq e -i '.plex.token = "{{ plex_auth_token }}"' /opt/python-plexlibrary/config.yml
   become: true
   become_user: "{{ user.name }}"
   when: plex_account_is_enabled
 
 - name: "Copy example recipes to '/opt/python-plexlibrary' folder"
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: "/opt/python-plexlibrary/recipes/examples/saltbox/"
     owner: "{{ user.name }}"
@@ -88,7 +120,7 @@
     - "recipes/*.yml"
 
 - name: "Copy helper scripts to '/opt/python-plexlibrary' folder"
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: "/opt/python-plexlibrary/{{ item }}"
     owner: "{{ user.name }}"
@@ -100,13 +132,13 @@
     - "plexlibrary-cron-helper.sh"
 
 - name: "Create '/usr/local/bin' symlink"
-  file:
+  ansible.builtin.file:
     src: "/opt/python-plexlibrary/plexlibrary.sh"
     dest: "/usr/local/bin/plexlibrary"
     state: link
 
 - name: "Add items to '.gitignore'"
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "/opt/python-plexlibrary/.gitignore"
     state: present
     insertafter: EOF
@@ -118,7 +150,7 @@
     - "*.log"
 
 - name: "Schedule cron task for daily update."
-  cron:
+  ansible.builtin.cron:
     name: "Python-PlexLibrary"
     user: "{{ user.name }}"
     job: "/opt/python-plexlibrary/plexlibrary-cron-helper.sh"

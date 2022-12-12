@@ -1,6 +1,6 @@
 #########################################################################
 # Title:            Sandbox: rflood                                     #
-# Author(s):        salty                                               #
+# Author(s):        salty, JigSawFr                                     #
 # URL:              https://github.com/saltyorg/Sandbox                 #
 #########################################################################
 #                   GNU General Public License v3.0                     #
@@ -37,9 +37,7 @@ rflood_paths_rtorrent_rc_location: "{{ rflood_paths_location }}/rtorrent.rc"
 rflood_web_subdomain: "{{ rflood_name }}"
 rflood_web_domain: "{{ user.domain }}"
 rflood_web_port: "3000"
-rflood_web_url: "{{ 'https://' + rflood_web_subdomain + '.' + rflood_web_domain
-                 if (reverse_proxy_is_enabled)
-                 else 'http://localhost:' + rflood_web_port }}"
+rflood_web_url: "{{ 'https://' + rflood_web_subdomain + '.' + rflood_web_domain }}"
 
 ################################
 # DNS
@@ -53,10 +51,22 @@ rflood_dns_proxy: "{{ dns.proxied }}"
 # Traefik
 ################################
 
-rflood_traefik_middleware: "rflood-auth,{{ traefik_default_middleware }}"
+rflood_traefik_sso_middleware: "{{ traefik_default_sso_middleware }}"
+rflood_traefik_middleware_default: "{{ traefik_default_middleware + ','
+                                       + lookup('vars', rflood_name + '_traefik_sso_middleware', default=rflood_traefik_sso_middleware)
+                                    if (lookup('vars', rflood_name + '_traefik_sso_middleware', default=rflood_traefik_sso_middleware) | length > 0)
+                                    else traefik_default_middleware }}"
+rflood_traefik_middleware_custom: ""
+rflood_traefik_middleware: "{{ rflood_traefik_middleware_default + ','
+                               + rflood_traefik_middleware_custom
+                            if (not rflood_traefik_middleware_custom.startswith(',') and rflood_traefik_middleware_custom | length > 0)
+                            else rflood_traefik_middleware_default
+                               + rflood_traefik_middleware_custom }}"
 rflood_traefik_certresolver: "{{ traefik_default_certresolver }}"
 rflood_traefik_enabled: true
-rflood_auth: "/etc/traefik/auth"
+# Disabled for security reasons, no authentication on API /!\
+rflood_traefik_api_enabled: false
+rflood_traefik_api_endpoint: "`/api`"
 
 ################################
 # Config
@@ -72,9 +82,9 @@ rflood_config_rflood_rc_settings_default:
   - { option: "network.port_range.set", value: "{{ rflood_docker_ports_50000 }}-{{ rflood_docker_ports_50000 }}" }
   - { option: "dht.port.set", value: "{{ rflood_docker_ports_6881 }}" }
   # Enable / Disable Public Trackers
-  - { option: "dht.mode.set", value: "{{ rflood_config_public_trackers | ternary('on','disable') }}" }
-  - { option: "trackers.use_udp.set", value: "{{ rflood_config_public_trackers | ternary('yes','no') }}" }
-  - { option: "protocol.pex.set", value: "{{ rflood_config_public_trackers | ternary('yes','no') }}" }
+  - { option: "dht.mode.set", value: "{{ rflood_config_public_trackers | ternary('on', 'disable') }}" }
+  - { option: "trackers.use_udp.set", value: "{{ rflood_config_public_trackers | ternary('yes', 'no') }}" }
+  - { option: "protocol.pex.set", value: "{{ rflood_config_public_trackers | ternary('yes', 'no') }}" }
   # Maximum XMLRPC payloads
   - { option: "network.xmlrpc.size_limit.set", value: "20M" }
 rflood_config_rflood_rc_settings_custom: []
@@ -94,8 +104,6 @@ rflood_docker_image_tag: "release"
 rflood_docker_image: "cr.hotio.dev/hotio/rflood:{{ rflood_docker_image_tag }}"
 
 # Ports
-rflood_docker_ports_defaults:
-  - "{{ rflood_web_port }}:{{ rflood_web_port }}"
 # - Internal and External ports need to match for the next set of ports
 # - Lookup available ports and set docker ports accordingly
 rflood_docker_ports_50000: "{{ port_lookup_50000.port
@@ -106,15 +114,11 @@ rflood_docker_ports_6881: "{{ port_lookup_6881.port
                            if (port_lookup_6881.port is defined)
                               and (port_lookup_6881.port | trim | length > 0)
                            else '6881' }}"
-rflood_docker_ports_torrents:
+rflood_docker_ports_defaults:
   - "{{ rflood_docker_ports_50000 }}:{{ rflood_docker_ports_50000 }}"
   - "{{ rflood_docker_ports_6881 }}:{{ rflood_docker_ports_6881 }}/udp"
 rflood_docker_ports_custom: []
 rflood_docker_ports: "{{ rflood_docker_ports_defaults
-                         + rflood_docker_ports_torrents
-                         + rflood_docker_ports_custom
-                      if (not reverse_proxy_is_enabled)
-                      else rflood_docker_ports_torrents
                          + rflood_docker_ports_custom }}"
 
 # Envs
@@ -156,8 +160,7 @@ rflood_docker_hosts: "{{ docker_hosts_common
                          | combine(rflood_docker_hosts_custom) }}"
 
 # Labels
-rflood_docker_labels_default:
-  traefik.http.middlewares.rflood-auth.basicauth.usersfile: "{{ rflood_auth }}"
+rflood_docker_labels_default: {}
 rflood_docker_labels_custom: {}
 rflood_docker_labels: "{{ docker_labels_common
                           | combine(rflood_docker_labels_default)

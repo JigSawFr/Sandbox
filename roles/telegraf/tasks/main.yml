@@ -8,14 +8,14 @@
 #########################################################################
 ---
 - name: Stop and remove any existing containers
-  docker_container:
+  community.docker.docker_container:
     name: telegraf
     container_default_behavior: compatibility
     tls_hostname: localhost
     state: absent
 
 - name: Create required directories
-  file:
+  ansible.builtin.file:
     path: "/opt/telegraf"
     state: "directory"
     mode: "0775"
@@ -23,12 +23,12 @@
     group: "{{ user.name }}"
 
 - name: Check if telegraf config exists
-  stat:
+  ansible.builtin.stat:
     path: "/opt/telegraf/telegraf.conf"
   register: telegraf_conf
 
 - name: Import telegraf config if needed
-  copy:
+  ansible.builtin.copy:
     src: "telegraf.conf"
     dest: "/opt/telegraf/telegraf.conf"
     owner: "{{ uid }}"
@@ -37,16 +37,13 @@
   when: not telegraf_conf.stat.exists
 
 - name: Create and start telegraf container
-  docker_container:
+  community.docker.docker_container:
     name: telegraf
     image: "telegraf"
     pull: yes
     command_handling: compatibility
     container_default_behavior: compatibility
     default_host_ip: ""
-    env:
-      PUID: "{{ uid }}"
-      PGID: "{{ gid }}"
     volumes:
       - "/opt/telegraf:/etc/telegraf:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
@@ -64,6 +61,7 @@
     network_mode: "saltbox"
     networks_cli_compatible: true
     purge_networks: yes
+    user: "telegraf:{{ dockergid }}"
     tls_hostname: localhost
     restart_policy: unless-stopped
     state: started

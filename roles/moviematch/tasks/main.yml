@@ -8,25 +8,29 @@
 #########################################################################
 ---
 - name: Report Plex Account Status
-  debug:
+  ansible.builtin.debug:
     msg: Requires Plex Account credentials to be entered in accounts.yml
   when: not plex_account_is_enabled
+
+- name: Check if Plex instance is defined
+  ansible.builtin.set_fact:
+    plex_name: "{{ plex_name | default(plex_instances[0]) }}"
 
 - name: Run Role
   block:
 
     - name: Add DNS record
-      include_tasks: "{{ resources_tasks_path }}/dns/tasker.yml"
+      ansible.builtin.include_tasks: "{{ resources_tasks_path }}/dns/tasker.yml"
       vars:
         dns_record: "{{ lookup('vars', role_name + '_dns_record') }}"
         dns_zone: "{{ lookup('vars', role_name + '_dns_zone') }}"
         dns_proxy: "{{ lookup('vars', role_name + '_dns_proxy') }}"
 
     - name: Remove existing Docker container
-      include_tasks: "{{ resources_tasks_path }}/docker/remove_docker_container.yml"
+      ansible.builtin.include_tasks: "{{ resources_tasks_path }}/docker/remove_docker_container.yml"
 
     - name: Create directories
-      file:
+      ansible.builtin.file:
         path: "{{ item }}"
         state: directory
         owner: "{{ user.name }}"
@@ -35,10 +39,10 @@
       with_items: "{{ lookup('vars', role_name + '_paths_folders_list') }}"
 
     - name: Import Plex Auth Token role
-      import_role:
+      ansible.builtin.include_role:
         name: plex_auth_token
 
     - name: Create Docker container
-      include_tasks: "{{ resources_tasks_path }}/docker/create_docker_container.yml"
+      ansible.builtin.include_tasks: "{{ resources_tasks_path }}/docker/create_docker_container.yml"
 
   when: plex_account_is_enabled

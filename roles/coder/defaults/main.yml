@@ -23,6 +23,7 @@ coder_paths_folders_list:
   - "{{ coder_paths_location }}"
   - "{{ coder_paths_location }}/project"
   - "{{ coder_paths_location }}/.config"
+  - "{{ coder_paths_location }}/.local"
 
 ################################
 # Web
@@ -31,9 +32,7 @@ coder_paths_folders_list:
 coder_web_subdomain: "{{ coder_name }}"
 coder_web_domain: "{{ user.domain }}"
 coder_web_port: "8080"
-coder_web_url: "{{ 'https://' + coder_web_subdomain + '.' + coder_web_domain
-                if (reverse_proxy_is_enabled)
-                else 'http://localhost:' + coder_web_port }}"
+coder_web_url: "{{ 'https://' + coder_web_subdomain + '.' + coder_web_domain }}"
 
 ################################
 # DNS
@@ -64,13 +63,10 @@ coder_docker_image_tag: "latest"
 coder_docker_image: "codercom/code-server:{{ coder_docker_image_tag }}"
 
 # Ports
-coder_docker_ports_defaults:
-  - "{{ coder_web_port }}:{{ coder_web_port }}"
+coder_docker_ports_defaults: []
 coder_docker_ports_custom: []
 coder_docker_ports: "{{ coder_docker_ports_defaults
-                        + coder_docker_ports_custom
-                     if (not reverse_proxy_is_enabled)
-                     else [] + coder_docker_ports_custom }}"
+                        + coder_docker_ports_custom }}"
 
 # Envs
 coder_docker_envs_default:
@@ -92,6 +88,7 @@ coder_docker_commands: "{{ coder_docker_commands_default
 coder_docker_volumes_default:
   - "{{ coder_paths_location }}/project:/home/coder/project"
   - "{{ coder_paths_location }}/.config:/home/coder/.config"
+  - "{{ coder_paths_location }}/.local:/home/coder/.local"
   - "{{ server_appdata_path }}:/host_opt"
 coder_docker_volumes_custom: []
 coder_docker_volumes: "{{ coder_docker_volumes_default
@@ -145,9 +142,6 @@ coder_docker_restart_policy: unless-stopped
 
 # State
 coder_docker_state: started
-
-# Stop Timeout
-coder_docker_stop_timeout: 15
 
 # User
 coder_docker_user: "{{ uid }}:{{ gid }}"
