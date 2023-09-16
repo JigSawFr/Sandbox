@@ -26,6 +26,10 @@ doplarr:
   overseer_default_id:
   partial_seasons: "true"
   log_level: ":info"
+foundry:
+  user: your_foundryvtt_username
+  pass: your_foundryvtt_password
+  app_key: your_foundryvtt_license
 goplaxt:
   trakt_id: ~
   trakt_secret: ~

@@ -36,6 +36,7 @@
     - { role: changedetection, tags: ['changedetection'] }
     - { role: cherry, tags: ['cherry'] }
     - { role: coder, tags: ['coder'] }
+    - { role: codex, tags: ['codex'] }
     - { role: code_server, tags: ['code_server'] }
     - { role: comicstreamer, tags: ['comicstreamer'] }
     - { role: comixed, tags: ['comixed'] }
@@ -52,8 +53,11 @@
     - { role: filebot, tags: ['filebot'] }
     - { role: filebrowser, tags: ['filebrowser'] }
     - { role: filezilla, tags: ['filezilla'] }
+    - { role: firefox, tags: ['firefox'] }
     - { role: flaresolverr, tags: ['flaresolverr'] }
+    - { role: forgejo, tags: ['forgejo'] }
     - { role: freshrss, tags: ['freshrss'] }
+    - { role: foundry, tags: ['foundry'] }
     - { role: funkwhale, tags: ['funkwhale'] }
     - { role: gaps, tags: ['gaps'] }
     - { role: goaccess, tags: ['goaccess'] }
